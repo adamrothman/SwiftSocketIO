@@ -1,0 +1,23 @@
+PODS:
+  - Alamofire (1.1.4)
+  - SocketRocket (0.3.1-beta2)
+
+DEPENDENCIES:
+  - Alamofire (~> 1.1)
+  - SocketRocket (from `git@github.com:square/SocketRocket.git`, commit `58c3723`)
+
+EXTERNAL SOURCES:
+  SocketRocket:
+    :commit: 58c3723
+    :git: git@github.com:square/SocketRocket.git
+
+CHECKOUT OPTIONS:
+  SocketRocket:
+    :commit: 58c3723
+    :git: git@github.com:square/SocketRocket.git
+
+SPEC CHECKSUMS:
+  Alamofire: 524225da382071ee3e6d0badd0ee4b4dc36740de
+  SocketRocket: 70df1983148525857ced17c57207bfb939bc6b8e
+
+COCOAPODS: 0.36.0.beta.2
