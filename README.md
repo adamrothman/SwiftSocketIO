@@ -42,8 +42,10 @@ To integrate SwiftSocketIO into your Xcode project using CocoaPods, specify it i
 ```ruby
 platform :ios, '8.1'
 
-pod 'SwiftSocketIO', '~> 0.1.0'
+pod 'SwiftSocketIO', :git => 'https://github.com/adamrothman/SwiftSocketIO.git'
 ```
+
+SwiftSocketIO is not yet available from the CocoaPods trunk. For now, you must specify it as a `git` dependency, rather than by version.
 
 Then, run the following command at the root of your project:
 
