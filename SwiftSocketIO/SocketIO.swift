@@ -11,15 +11,15 @@ import Foundation
 import Alamofire
 
 
-public class SocketIO: NSObject, TransportDelegate {
+public class SocketIO: TransportDelegate {
 
   public typealias EventHandler = ([AnyObject]?) -> Void
 
-  let baseURL: NSURL
-  let secure: Bool
+  let httpURL: NSURL!
+  let wsURL: NSURL!
 
-  var pingDispatchSource: dispatch_source_t
-  var timeoutDispatchSource: dispatch_source_t
+  let pingDispatchSource: dispatch_source_t!
+  let timeoutDispatchSource: dispatch_source_t!
 
   var transport: Transport!
 
@@ -40,26 +40,51 @@ public class SocketIO: NSObject, TransportDelegate {
 
   // MARK: - Public interface
 
-  required public init(host: String, secure: Bool) {
-    self.baseURL = NSURL(scheme: secure ? "https" : "http", host: host, path: "/socket.io/")!
-    self.secure = secure
+  required public init(host: NSURL) {
+    if let httpURLComponents = NSURLComponents(URL: host, resolvingAgainstBaseURL: true) {
+      httpURLComponents.path = "/socket.io/"
 
-    pingDispatchSource = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0))
-    timeoutDispatchSource = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0))
+      if let httpURLFromComponents = httpURLComponents.URL {
+        httpURL = httpURLFromComponents
 
-    super.init()
+        let wsURLComponents: NSURLComponents = httpURLComponents.copy() as NSURLComponents
+        wsURLComponents.scheme = httpURLComponents.scheme == "https" ? "wss" : "ws"
 
-    dispatch_source_set_event_handler(pingDispatchSource) {
-      self.transport.send(EngineIOPacket(type: .Ping))
+        if let wsURLFromComponents = wsURLComponents.URL {
+          wsURL = wsURLFromComponents
+
+          pingDispatchSource = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0))
+          timeoutDispatchSource = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0))
+
+          dispatch_source_set_event_handler(pingDispatchSource) {
+            self.transport.send(EngineIOPacket(type: .Ping))
+          }
+          dispatch_resume(pingDispatchSource)
+
+          dispatch_source_set_event_handler(timeoutDispatchSource) {
+            dispatch_source_cancel(self.pingDispatchSource)
+            dispatch_source_cancel(self.timeoutDispatchSource)
+            self.disconnect()
+          }
+          dispatch_resume(timeoutDispatchSource)
+        }
+      }
     }
-    dispatch_resume(pingDispatchSource)
+  }
 
-    dispatch_source_set_event_handler(timeoutDispatchSource) {
-      dispatch_source_cancel(self.pingDispatchSource)
-      dispatch_source_cancel(self.timeoutDispatchSource)
-      self.disconnect()
+  convenience public init?(host: String) {
+    if let url = NSURL(string: host) {
+      self.init(host: url)
+    } else {
+      // The Swift 1.1 compiler is unable to destroy partially initialized classes in all
+      // cases, so it disallows formation of a situation where it would have to. We have
+      // to initialize the instance before returning nil, for now. From this post on the
+      // Apple Developer Forums: https://devforums.apple.com/message/1062922#1062922
+      // See the section on failable initializers in the Xcode 6.1 Release Notes here:
+      // https://developer.apple.com/library/prerelease/ios/releasenotes/DeveloperTools/RN-Xcode/Chapters/xc6_release_notes.html#//apple_ref/doc/uid/TP40001051-CH4-DontLinkElementID_20
+      self.init(host: NSURL(string: "")!)
+      return nil
     }
-    dispatch_resume(timeoutDispatchSource)
   }
 
   public func connect() {
@@ -70,7 +95,7 @@ public class SocketIO: NSObject, TransportDelegate {
 
     manager.request(
       .GET,
-      self.baseURL,
+      httpURL,
       parameters: [
         "b64": true,
         "EIO": 3,
@@ -92,19 +117,13 @@ public class SocketIO: NSObject, TransportDelegate {
                       let upgrades: [String] = handshakeInfo["upgrades"] as Array
 
                       if contains(upgrades, "websocket") {
-                        if let socketURLComponents = NSURLComponents(URL: self.baseURL, resolvingAgainstBaseURL: true) {
-                          socketURLComponents.scheme = self.secure ? "wss" : "ws"
+                        let sid: String = handshakeInfo["sid"] as String
+                        self.pingInterval = handshakeInfo["pingInterval"] as Double / 1000
+                        self.pingTimeout = handshakeInfo["pingTimeout"] as Double / 1000
 
-                          if let socketURL = socketURLComponents.URL {
-                            let sid: String = handshakeInfo["sid"] as String
-                            self.pingInterval = handshakeInfo["pingInterval"] as Double / 1000
-                            self.pingTimeout = handshakeInfo["pingTimeout"] as Double / 1000
-
-                            self.transport = WebsocketTransport(URL: socketURL, sid: sid)
-                            self.transport.delegate = self
-                            self.transport.open()
-                          }
-                        }
+                        self.transport = WebsocketTransport(URL: self.wsURL, sid: sid)
+                        self.transport.delegate = self
+                        self.transport.open()
                       }
                     }
                   }
@@ -117,13 +136,14 @@ public class SocketIO: NSObject, TransportDelegate {
     }
   }
 
-  public func emit(event: String, data: AnyObject? = nil) {
+  public func emit(event: String, data: AnyObject...) {
     NSLog("[SocketIO]\temitting '\(event)' with \(data)")
 
     let packet = SocketIOPacket(type: .Event)
+
     var payloadArray: [AnyObject] = [event]
-    if data != nil {
-      payloadArray.append(data!)
+    for datum in data {
+      payloadArray.append(datum)
     }
     packet.payloadObject = payloadArray
 

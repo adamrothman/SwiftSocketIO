@@ -11,6 +11,7 @@ The following features are not implemented by SwiftSocketIO but will be included
 - [ ] XHR polling transport
 - [ ] Namespaces
 - [ ] Binary events
+- [ ] Reconnection attempts
 - [ ] Test coverage
 
 ## Requirements
@@ -50,25 +51,6 @@ Then, run the following command at the root of your project:
 $ pod install
 ```
 
-### Carthage
-
-Carthage is a decentralized dependency manager that automates the process of adding frameworks to your Cocoa application.
-
-You can install Carthage with [Homebrew](http://brew.sh/) using the following command:
-
-```bash
-$ brew update
-$ brew install carthage
-```
-
-To integrate Alamofire into your Xcode project using Carthage, specify it in your `Cartfile`:
-
-```ogdl
-github "adamrothman/SwiftSocketIO" >= 0.1.0
-```
-
----
-
 ## API
 
 ### Classes and Types
@@ -79,17 +61,21 @@ github "adamrothman/SwiftSocketIO" >= 0.1.0
 
 ### SocketIO Instance Methods
 
-#### init(host: String, secure: Bool)
+#### required init(host: NSURL)
 
-Designated initializer. Returns a `SocketIO` instance configured to connect to `host`. If `secure` is `true`, connection will use the `https` and `wss` protocols.
+Designated initializer. Returns a `SocketIO` instance configured to connect to the URL specified by `host`. `host` should be a fully qualified URL, including the protocol (`http` or `https`). If `https` is used, the secure `wss` protocol will be used for the websocket connection.
+
+#### convenience init?(host: String)
+
+Convenience intializer. Attempts to create an `NSURL` instance from `host`. This is initializer is failable, meaning that it returns an optional value. If successful, delegates to the designated initializer above. If not, returns `nil`.
 
 #### connect()
 
 Opens the socket connection. Must be called before you can send or receive any data on the socket.
 
-#### emit(event: String, data: AnyObject? = nil)
+#### emit(event: String, data: AnyObject...)
 
-Emits an event with name `event` and optionally, payload `data`. If not `nil`, `data` must be an object that is JSON serializable.
+Emits an event with name `event` and optionally, the objects passed as `data`. You can 0 or more objects as `data`, but they must all be JSON serializable. This is not currently enforced by the compiler; passing a non-serializable object will cause a crash.
 
 #### on(event: String, handler: EventHandler)
 
@@ -105,8 +91,6 @@ Removes all previously registered event handlers.
 
 Closes the socket connection. If you have registered a handler for the `"disconnect"` event, it will be called before the connection is closed.
 
----
-
 ## Usage Examples
 
 ### Initializing and Opening a Socket
@@ -114,17 +98,23 @@ Closes the socket connection. If you have registered a handler for the `"disconn
 ```swift
 import SwiftSocketIO
 
-let socket = SwiftSocketIO.SocketIO(host: "mysocketserver.com", secure: true)
+let socket: SwiftSocketIO.SocketIO = SwiftSocketIO.SocketIO(host: NSURL(scheme: "https", host: "mysocketserver.com", path: "/")!)
 socket.connect()
+
+// or
+
+let socket: SwiftSocketIO.SocketIO? = SwiftSocketIO.SocketIO(host: "https://mysocketserver.com")
+socket?.connect()
 ```
 
 ### Emitting Events
 
 ```swift
-socket.emit("begin session")
-socket.emit("new user", data: "adam")
-socket.emit("device os", data: ["iOS", 8.1])
-socket.emit("message", data: ["user": "adam", "content": "hello world"])
+socket.emit("no data")
+socket.emit("a string", data: "hi there")
+socket.emit("an array", data: ["iOS", 8.1])
+socket.emit("a dictionary", data: ["user": "adam", "message": "hello world"])
+socket.emit("different objects", data: "adam", [1, 2], ["hello": "world"])
 ```
 
 ### Registering Handlers
@@ -134,26 +124,38 @@ socket.on("connect") { (_) in
     println("socket connected")
 }
 
-socket.on("new user") { (args) in
-    if let newUser: String = args?.first as? String {
-        println("new user: \(newUser)")
+socket.on("no data") { (_) in
+    println("no data... so sad")
+}
+
+socket.on("a string") { (args) in
+    if let s: String = args?.first as? String {
+        println("received a string: \(s)")
     }
 }
 
-socket.on("device os") { (args) in
-    if let osInfo: [String] = args as? Array {
-        println("device OS: \(osInfo[0]), version: \(osInfo[1])")
+socket.on("an array") { (args) in
+    if let a: [AnyObject] = args?.first as? Array {
+        println("got an array: \(a)")
     }
 }
 
-socket.on("message") { (args) in
-    if let message: [String: String] = args?.first as? Dictionary {
-        println("message from \(message["user"]!): \(message["content"]!)")
+socket.on("a dictionary") { (args) in
+    if let d: [String: String] = args?.first as? Dictionary {
+        println("got a dictionary: \(d)")
     }
+}
+
+socket.on("different objects") { (args) in
+    for o in args {
+        println("got object: \(o)")
+    }
+}
+
+socket.on("disconnect") { (_) in
+    println("socket disconnected")
 }
 ```
-
----
 
 ## License
 

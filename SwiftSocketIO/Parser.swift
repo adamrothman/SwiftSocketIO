@@ -9,7 +9,7 @@
 import Foundation
 
 
-class Parser: NSObject {
+class Parser {
 
   private class func decodePacket(string: String) -> (Int, String)? {
     let typeIndex = string.startIndex

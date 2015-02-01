@@ -12,7 +12,7 @@ import Alamofire
 import SocketRocket
 
 
-protocol Transport: class, NSObjectProtocol {
+protocol Transport: class {
   weak var delegate: TransportDelegate? { get set }
 
   var isReady: Bool { get }
@@ -25,7 +25,7 @@ protocol Transport: class, NSObjectProtocol {
 }
 
 
-protocol TransportDelegate: class, NSObjectProtocol {
+protocol TransportDelegate: class {
   func transportDidOpen(transport: Transport)
   func transport(transport: Transport, didReceiveMessage message: String)
   func transport(transport: Transport, didCloseWithCode code: Int, reason: String!, wasClean: Bool)

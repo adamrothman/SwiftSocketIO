@@ -9,13 +9,13 @@
 import Foundation
 
 
-protocol Packet: class, NSObjectProtocol {
+protocol Packet: class {
   var rawType: Int { get }
   var payload: String? { get set }
 }
 
 
-class EngineIOPacket: NSObject, Packet {
+class EngineIOPacket: Packet {
 
   enum TypeCode: Int {
     case Open     = 0 // non-ws
@@ -43,13 +43,12 @@ class EngineIOPacket: NSObject, Packet {
   init(type: TypeCode, payload: String? = nil) {
     self.type = type
     self.payload = payload
-    super.init()
   }
 
 }
 
 
-class SocketIOPacket: NSObject, Packet {
+class SocketIOPacket: Packet {
 
   enum TypeCode: Int {
     case Connect = 0
@@ -95,7 +94,6 @@ class SocketIOPacket: NSObject, Packet {
   init(type: TypeCode, payload: String? = nil) {
     self.type = type
     self.payload = payload
-    super.init()
   }
 
 }
