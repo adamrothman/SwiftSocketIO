@@ -19,6 +19,11 @@ The following features are not implemented by SwiftSocketIO but will be included
 - iOS 8.1+ / Mac OS X 10.10+
 - Xcode 6.1
 
+### Dependencies
+
+- [Alamofire](https://github.com/Alamofire/Alamofire)
+- [SocketRocket](https://github.com/square/SocketRocket)
+
 ## Communication
 
 - If you **found a bug**, open an issue.
@@ -52,6 +57,10 @@ Then, run the following command at the root of your project:
 ```bash
 $ pod install
 ```
+
+This will integrate SwiftSocketIO and its dependencies into your project.
+
+To develop SwiftSocketIO, clone the repository and run `pod install` at the root to install the dependencies.
 
 ## API
 

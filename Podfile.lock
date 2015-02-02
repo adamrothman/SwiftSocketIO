@@ -4,20 +4,10 @@ PODS:
 
 DEPENDENCIES:
   - Alamofire (~> 1.1)
-  - SocketRocket (from `git@github.com:square/SocketRocket.git`, commit `58c3723`)
-
-EXTERNAL SOURCES:
-  SocketRocket:
-    :commit: 58c3723
-    :git: git@github.com:square/SocketRocket.git
-
-CHECKOUT OPTIONS:
-  SocketRocket:
-    :commit: 58c3723
-    :git: git@github.com:square/SocketRocket.git
+  - SocketRocket (~> 0.3.1-beta2)
 
 SPEC CHECKSUMS:
   Alamofire: 524225da382071ee3e6d0badd0ee4b4dc36740de
-  SocketRocket: 70df1983148525857ced17c57207bfb939bc6b8e
+  SocketRocket: 79a68ae186063c65e1fe6f638b1ae2927aa5f304
 
 COCOAPODS: 0.36.0.beta.2

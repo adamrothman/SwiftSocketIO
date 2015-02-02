@@ -13,13 +13,26 @@ import Alamofire
 
 public class SocketIO: TransportDelegate {
 
+  public struct Options {
+//    var path: String = "/socket.io/"
+    var reconnection: Bool = false
+    var reconnectionAttempts: Int = 0
+    var reconnectionDelay: Double = 1.0
+    var reconnectionDelayMax: Double = 5.0
+    var reconnectionJitter: Double = 0.5
+    var timeout: Double = 20.0
+    var autoConnect: Bool = false
+  }
+
   public typealias EventHandler = ([AnyObject]?) -> Void
 
-  let httpURL: NSURL!
-  let wsURL: NSURL!
+  let httpURL: NSURL
+  let wsURL: NSURL
 
-  let pingDispatchSource: dispatch_source_t!
-  let timeoutDispatchSource: dispatch_source_t!
+  let opts: Options
+
+  let pingDispatchSource: dispatch_source_t
+  let timeoutDispatchSource: dispatch_source_t
 
   var transport: Transport!
 
@@ -40,34 +53,47 @@ public class SocketIO: TransportDelegate {
 
   // MARK: - Public interface
 
-  required public init(host: NSURL) {
-    if let httpURLComponents = NSURLComponents(URL: host, resolvingAgainstBaseURL: true) {
-      httpURLComponents.path = "/socket.io/"
+  required public init(host: NSURL, options: Options = Options()) {
+    let httpURLComponents = NSURLComponents(URL: host, resolvingAgainstBaseURL: true)
+    httpURLComponents?.path = "/socket.io/"
+    httpURL = (httpURLComponents?.URL)!
 
-      if let httpURLFromComponents = httpURLComponents.URL {
-        httpURL = httpURLFromComponents
+    // Recycle httpURLComponents to make the ws(s):// URL
+    let websocketProtocol = httpURLComponents?.scheme == "https" ? "wss" : "ws"
+    httpURLComponents?.scheme = websocketProtocol
+    wsURL = (httpURLComponents?.URL)!
 
-        let wsURLComponents: NSURLComponents = httpURLComponents.copy() as NSURLComponents
-        wsURLComponents.scheme = httpURLComponents.scheme == "https" ? "wss" : "ws"
+    opts = options
 
-        if let wsURLFromComponents = wsURLComponents.URL {
-          wsURL = wsURLFromComponents
+    pingDispatchSource = dispatch_source_create(
+      DISPATCH_SOURCE_TYPE_TIMER,
+      0,
+      0,
+      dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0)
+    )
 
-          pingDispatchSource = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0))
-          timeoutDispatchSource = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0))
+    timeoutDispatchSource = dispatch_source_create(
+      DISPATCH_SOURCE_TYPE_TIMER,
+      0,
+      0,
+      dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0)
+    )
 
-          dispatch_source_set_event_handler(pingDispatchSource) {
-            self.transport.send(EngineIOPacket(type: .Ping))
-          }
-          dispatch_resume(pingDispatchSource)
+    dispatch_source_set_event_handler(pingDispatchSource) {
+      self.transport.send(EngineIOPacket(type: .Ping))
+    }
+    dispatch_resume(pingDispatchSource)
 
-          dispatch_source_set_event_handler(timeoutDispatchSource) {
-            dispatch_source_cancel(self.pingDispatchSource)
-            dispatch_source_cancel(self.timeoutDispatchSource)
-            self.disconnect()
-          }
-          dispatch_resume(timeoutDispatchSource)
-        }
+    dispatch_source_set_event_handler(timeoutDispatchSource) {
+      dispatch_source_cancel(self.pingDispatchSource)
+      dispatch_source_cancel(self.timeoutDispatchSource)
+      self.disconnect()
+    }
+    dispatch_resume(timeoutDispatchSource)
+
+    if opts.autoConnect {
+      dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0)) {
+        self.connect()
       }
     }
   }

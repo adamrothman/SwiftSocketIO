@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		52FD37DC9817238677B0C16A /* Pods.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 41892C8AD64A3B3E718F6DAD /* Pods.framework */; settings = {ATTRIBUTES = (Weak, ); }; };
+		6614CAE01A7EFDE0008415A4 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6614CADF1A7EFDE0008415A4 /* Foundation.framework */; };
 		93810C0A1A7C0CD600E0B361 /* SwiftSocketIO.h in Headers */ = {isa = PBXBuildFile; fileRef = 93810C091A7C0CD600E0B361 /* SwiftSocketIO.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		93810C101A7C0CD600E0B361 /* SwiftSocketIO.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 93810C041A7C0CD600E0B361 /* SwiftSocketIO.framework */; };
 		93810C171A7C0CD600E0B361 /* SwiftSocketIOTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93810C161A7C0CD600E0B361 /* SwiftSocketIOTests.swift */; };
@@ -30,6 +31,7 @@
 /* Begin PBXFileReference section */
 		41892C8AD64A3B3E718F6DAD /* Pods.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		632308DD2ACC9E2BA1475CC6 /* Pods.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = Pods.debug.xcconfig; path = "Pods/Target Support Files/Pods/Pods.debug.xcconfig"; sourceTree = "<group>"; };
+		6614CADF1A7EFDE0008415A4 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		93810C041A7C0CD600E0B361 /* SwiftSocketIO.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = SwiftSocketIO.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		93810C081A7C0CD600E0B361 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		93810C091A7C0CD600E0B361 /* SwiftSocketIO.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SwiftSocketIO.h; sourceTree = "<group>"; };
@@ -48,6 +50,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				6614CAE01A7EFDE0008415A4 /* Foundation.framework in Frameworks */,
 				52FD37DC9817238677B0C16A /* Pods.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -124,6 +127,7 @@
 		F39769DF7AEF32B6F8039E5B /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				6614CADF1A7EFDE0008415A4 /* Foundation.framework */,
 				41892C8AD64A3B3E718F6DAD /* Pods.framework */,
 			);
 			name = Frameworks;
